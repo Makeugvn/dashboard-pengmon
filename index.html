@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaControl Pro — Water Treatment Plant Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060d1a;--panel:#0a1628;--card:#0e1e35;--border:#1a3a5c;
+  --accent:#00d4ff;--accent2:#00ff9d;--accent3:#ff6b35;--accent4:#ffd700;
+  --warn:#ff4444;--text:#c8e0f4;--muted:#4a6fa5;--grid:#0d1f38;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Exo 2',sans-serif;
+  display:flex;flex-direction:column;
+}
+.mono{font-family:'Share Tech Mono',monospace}
+
+/* ── HEADER ── */
+.header{
+  background:linear-gradient(90deg,#060d1a 0%,#0a2040 50%,#060d1a 100%);
+  border-bottom:1px solid var(--border);
+  padding:10px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;flex-shrink:0;
+}
+.header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo-ring{
+  width:38px;height:38px;border-radius:50%;
+  border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;flex-shrink:0;
+}
+.logo-ring::before{
+  content:'';position:absolute;width:30px;height:30px;border-radius:50%;
+  border:1px solid rgba(0,212,255,.35);animation:spin 4s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo-ring i{font-size:17px;color:var(--accent)}
+.plant-title{font-size:15px;font-weight:700;letter-spacing:2px;color:#fff;text-transform:uppercase}
+.plant-sub{font-size:9px;color:var(--muted);letter-spacing:3px;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:20px}
+.sys-status{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:blink 2s ease-in-out infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.time-display{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--accent);letter-spacing:2px}
+
+/* ── LAYOUT BODY ── */
+.body-wrap{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.main-row{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;border-bottom:1px solid var(--border)}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;height:210px;flex-shrink:0}
+
+/* ── SECTION TITLE ── */
+.section-title{
+  font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;
+  padding:9px 16px 7px;border-bottom:1px solid var(--grid);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.section-title::before{content:'';width:3px;height:11px;background:var(--accent);border-radius:2px;flex-shrink:0}
+
+/* ── TRANSMITTER PANEL ── */
+.transmitters-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.tx-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);flex:1;overflow:hidden}
+.tx-card{
+  background:var(--card);padding:13px 11px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.tx-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.tx-card.level::before{background:linear-gradient(90deg,#00d4ff,#0066ff)}
+.tx-card.pressure::before{background:linear-gradient(90deg,#ffd700,#ff8c00)}
+.tx-card.quality::before{background:linear-gradient(90deg,#00ff9d,#00cc44)}
+.tx-card.flow::before{background:linear-gradient(90deg,#ff6b35,#ff0066)}
+.tx-label{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+.tx-label i{font-size:11px}
+.tx-name{font-size:9px;color:var(--text);margin-bottom:8px;font-weight:600}
+.tx-value{font-family:'Share Tech Mono',monospace;font-size:24px;line-height:1;margin-bottom:1px}
+.tx-unit{font-size:9px;color:var(--muted);margin-bottom:8px}
+.tx-card.level .tx-value{color:#00d4ff}
+.tx-card.pressure .tx-value{color:#ffd700}
+.tx-card.quality .tx-value{color:#00ff9d}
+.tx-card.flow .tx-value{color:#ff6b35}
+.gauge-bar{height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-top:auto}
+.gauge-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.level .gauge-fill{background:linear-gradient(90deg,#00d4ff,#0066ff)}
+.pressure .gauge-fill{background:linear-gradient(90deg,#ffd700,#ff8c00)}
+.quality .gauge-fill{background:linear-gradient(90deg,#00ff9d,#00cc44)}
+.flow .gauge-fill{background:linear-gradient(90deg,#ff6b35,#ff0066)}
+.tx-range{display:flex;justify-content:space-between;font-size:7px;color:var(--muted);margin-top:3px}
+.tx-trend{position:absolute;top:10px;right:10px;font-size:10px}
+.trend-up{color:#00ff9d}.trend-dn{color:#ff4444}.trend-st{color:var(--muted)}
+
+/* ── CHART PANEL ── */
+.charts-panel{display:flex;flex-direction:column;overflow:hidden}
+.chart-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-btn{
+  flex:1;padding:8px 4px;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  font-family:'Exo 2',sans-serif;border-bottom:2px solid transparent;
+  transition:all .2s;font-weight:600;
+}
+.tab-btn.active{border-bottom-width:2px}
+.tab-btn:hover:not(.active){color:var(--text)}
+.chart-area{flex:1;padding:10px 14px;display:flex;flex-direction:column;overflow:hidden}
+.legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px;flex-shrink:0}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:8.5px;color:var(--muted);font-family:'Share Tech Mono',monospace}
+.legend-swatch{width:16px;height:2px;border-radius:1px;flex-shrink:0}
+.chart-wrap{position:relative;flex:1;min-height:0}
+
+/* ── PUMPS PANEL ── */
+.pumps-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;border-top:1px solid var(--border)}
+.pump-list{padding:6px 10px;display:flex;flex-direction:column;gap:5px;overflow-y:auto;flex:1}
+.pump-card{
+  background:var(--card);border:1px solid var(--border);border-radius:5px;
+  padding:8px 10px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;
+}
+.pump-card.running{border-color:rgba(0,255,157,.3)}
+.pump-card.running::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,157,.04) 0%,transparent 60%)}
+.pump-icon-wrap{
+  width:38px;height:38px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;
+}
+.pump-icon-wrap.running{border-color:var(--accent2);box-shadow:0 0 10px rgba(0,255,157,.2)}
+.pump-icon-wrap i{font-size:18px;color:var(--muted)}
+.pump-icon-wrap.running i{color:var(--accent2)}
+.spin-ring{position:absolute;inset:-4px;border-radius:50%;border:1px dashed rgba(0,255,157,.4);animation:spin 3s linear infinite}
+.pump-info{flex:1;min-width:0}
+.pump-name{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:1px}
+.pump-spec{font-size:8px;color:var(--muted);margin-bottom:4px}
+.pump-stats{display:flex;align-items:baseline;gap:6px}
+.pump-rpm{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--accent2)}
+.pump-bar{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:5px;overflow:hidden}
+.pump-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent2),#00aa66);border-radius:2px;transition:width 1s}
+.pump-status-badge{padding:3px 7px;border-radius:3px;font-size:7.5px;letter-spacing:2px;text-transform:uppercase;font-weight:700;flex-shrink:0}
+.badge-run{background:rgba(0,255,157,.12);color:var(--accent2);border:1px solid rgba(0,255,157,.3)}
+.badge-stop{background:rgba(255,68,68,.1);color:#ff4444;border:1px solid rgba(255,68,68,.2)}
+.badge-stby{background:rgba(255,215,0,.1);color:#ffd700;border:1px solid rgba(255,215,0,.2)}
+
+/* ── VALVE PANEL ── */
+.valves-panel{display:flex;flex-direction:column;overflow:hidden;border-top:1px solid var(--border)}
+.valve-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);margin:6px 10px;border:1px solid var(--border);border-radius:5px;overflow:hidden;flex:1}
+.valve-cell{background:var(--card);padding:8px 6px;text-align:center;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.valve-circle{
+  width:40px;height:40px;border-radius:50%;margin:0 auto 5px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;border:2px solid var(--border);
+}
+.valve-circle.open{border-color:var(--accent2);background:rgba(0,255,157,.07);box-shadow:0 0 10px rgba(0,255,157,.12)}
+.valve-circle.closed{border-color:rgba(255,68,68,.4);background:rgba(255,68,68,.05)}
+.valve-circle i{font-size:20px}
+.valve-circle.open i{color:var(--accent2)}
+.valve-circle.closed i{color:#ff6666}
+.valve-id{font-family:'Share Tech Mono',monospace;font-size:9.5px;color:var(--muted);margin-bottom:2px}
+.valve-name{font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.valve-state{font-size:7.5px;letter-spacing:2px;font-weight:700;text-transform:uppercase}
+.valve-state.open{color:var(--accent2)}.valve-state.closed{color:#ff4444}
+.flow-anim{
+  position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:20px;height:2px;background:var(--accent2);border-radius:1px;
+  animation:fpulse 1.5s ease-in-out infinite;
+}
+@keyframes fpulse{0%,100%{opacity:.3;width:12px}50%{opacity:1;width:20px}}
+
+/* ── STATUS BAR ── */
+.alarm-bar{
+  background:#070f1c;border-top:1px solid var(--border);
+  padding:6px 16px;display:flex;align-items:center;gap:14px;
+  flex-shrink:0;overflow:hidden;
+}
+.alarm-label{font-size:8.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.alarm-label i{color:var(--accent4);font-size:11px}
+.ticker-wrap{overflow:hidden;flex:1;position:relative}
+.ticker-track{display:flex;gap:28px;white-space:nowrap;animation:ticker 40s linear infinite}
+.ticker-track:hover{animation-play-state:paused}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{font-size:9px;color:var(--muted);letter-spacing:1px;flex-shrink:0;display:flex;align-items:center;gap:5px}
+.ticker-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.t-ok .ticker-dot{background:var(--accent2);box-shadow:0 0 4px var(--accent2)}
+.t-warn .ticker-dot{background:var(--accent4);box-shadow:0 0 4px var(--accent4)}
+.t-info .ticker-dot{background:var(--accent);box-shadow:0 0 4px var(--accent)}
+.t-err .ticker-dot{background:#ff4444;box-shadow:0 0 4px #ff4444}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-ring"><i class="ti ti-droplet"></i></div>
+    <div>
+      <div class="plant-title">AquaControl Pro</div>
+      <div class="plant-sub">Water Treatment Plant &nbsp;·&nbsp; Monitoring System v1.0</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div style="text-align:right">
+      <div style="font-size:9px;letter-spacing:2px;color:var(--muted)" id="datedisp">—</div>
+      <div class="time-display" id="clock">00:00:00</div>
+    </div>
+    <div style="width:1px;height:28px;background:var(--border)"></div>
+    <div style="text-align:right">
+      <div class="sys-status" style="justify-content:flex-end;margin-bottom:3px">
+        <div class="dot" id="connDot"></div>
+        <span style="font-size:9.5px;letter-spacing:1.5px;color:#c8e0f4" id="statusText">MENGHUBUNGKAN...</span>
+      </div>
+      <div style="font-size:8px;color:var(--muted);letter-spacing:1px" id="updateInterval">Connecting to server...</div>
+    </div>
+  </div>
+</div>
+
+<div class="body-wrap">
+  <div class="main-row">
+
+    <!-- TRANSMITTERS -->
+    <div class="transmitters-panel">
+      <div class="section-title"><i class="ti ti-antenna"></i> Transmitter &amp; Sensor — 6 Unit</div>
+      <div class="tx-grid">
+
+        <!-- LT-101 -->
+        <div class="tx-card level">
+          <div class="tx-trend" id="lt1trend"><span class="trend-st"><i class="ti ti-minus"></i></span></div>
+          <div class="tx-label"><i class="ti ti-waves"></i> Level</div>
+          <div class="tx-name">LT-101 · Bak Sedimentasi</div>
+          <div class="tx-value" id="lt1val">2.84</div>
+          <div class="tx-unit">meter</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="lt1bar" style="width:71%"></div></div>
+          <div class="tx-range"><span>0.0 m</span><span>4.0 m</span></div>
+        </div>
+
+        <!-- LT-102 -->
+        <div class="tx-card level">
+          <div class="tx-trend" id="lt2trend"><span class="trend-st"><i class="ti ti-minus"></i></span></div>
+          <div class="tx-label"><i class="ti ti-waves"></i> Level</div>
+          <div class="tx-name">LT-102 · Bak Filter</div>
+          <div class="tx-value" id="lt2val">1.62</div>
+          <div class="tx-unit">meter</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="lt2bar" style="width:54%"></div></div>
+          <div class="tx-range"><span>0.0 m</span><span>3.0 m</span></div>
+        </div>
+
+        <!-- PT-201 -->
+        <div class="tx-card pressure">
+          <div class="tx-trend" id="pt1trend"><span class="trend-st"><i class="ti ti-minus"></i></span></div>
+          <div class="tx-label"><i class="ti ti-gauge"></i> Pressure</div>
+          <div class="tx-name">PT-201 · Pipa Inlet</div>
+          <div class="tx-value" id="pt1val">3.47</div>
+          <div class="tx-unit">bar</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="pt1bar" style="width:69%"></div></div>
+          <div class="tx-range"><span>0.0 bar</span><span>5.0 bar</span></div>
+        </div>
+
+        <!-- PT-202 -->
+        <div class="tx-card pressure">
+          <div class="tx-trend" id="pt2trend"><span class="trend-st"><i class="ti ti-minus"></i></span></div>
+          <div class="tx-label"><i class="ti ti-gauge"></i> Pressure</div>
+          <div class="tx-name">PT-202 · Pipa Outlet</div>
+          <div class="tx-value" id="pt2val">2.18</div>
+          <div class="tx-unit">bar</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="pt2bar" style="width:43%"></div></div>
+          <div class="tx-range"><span>0.0 bar</span><span>5.0 bar</span></div>
+        </div>
+
+        <!-- QT-301 -->
+        <div class="tx-card quality">
+          <div class="tx-trend" id="qt1trend"><span class="trend-st"><i class="ti ti-minus"></i></span></div>
+          <div class="tx-label"><i class="ti ti-flask"></i> Kualitas</div>
+          <div class="tx-name">QT-301 · TDS Effluent</div>
+          <div class="tx-value" id="qt1val">187</div>
+          <div class="tx-unit">ppm</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="qt1bar" style="width:37%"></div></div>
+          <div class="tx-range"><span>0 ppm</span><span>500 ppm</span></div>
+        </div>
+
+        <!-- FT-401 -->
+        <div class="tx-card flow">
+          <div class="tx-trend" id="ft1trend"><span class="trend-st"><i class="ti ti-minus"></i></span></div>
+          <div class="tx-label"><i class="ti ti-topology-full"></i> Flow</div>
+          <div class="tx-name">FT-401 · Flow Rate</div>
+          <div class="tx-value" id="ft1val">47.3</div>
+          <div class="tx-unit">m³/h</div>
+          <div class="gauge-bar"><div class="gauge-fill" id="ft1bar" style="width:63%"></div></div>
+          <div class="tx-range"><span>0 m³/h</span><span>75 m³/h</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CHART PANEL -->
+    <div class="charts-panel">
+      <div class="section-title"><i class="ti ti-chart-line"></i> Grafik Realtime</div>
+      <div class="chart-tabs">
+        <button class="tab-btn active" id="tab0" onclick="switchTab(0)" style="color:#00d4ff;border-bottom-color:#00d4ff">Level</button>
+        <button class="tab-btn" id="tab1" onclick="switchTab(1)">Tekanan</button>
+        <button class="tab-btn" id="tab2" onclick="switchTab(2)">TDS Kualitas</button>
+        <button class="tab-btn" id="tab3" onclick="switchTab(3)">Flow Rate</button>
+      </div>
+      <div class="chart-area">
+        <div class="legend-row" id="legendRow"></div>
+        <div class="chart-wrap">
+          <canvas id="rtChart" role="img" aria-label="Grafik realtime sensor water treatment plant"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-row -->
+
+  <div class="bottom-row">
+
+    <!-- PUMPS -->
+    <div class="pumps-panel">
+      <div class="section-title"><i class="ti ti-engine"></i> Status Pompa — 3 Unit</div>
+      <div class="pump-list">
+
+        <div class="pump-card running" id="pcard1">
+          <div class="pump-icon-wrap running" id="picon1">
+            <div class="spin-ring"></div>
+            <i class="ti ti-windmill"></i>
+          </div>
+          <div class="pump-info">
+            <div class="pump-name">P-01 · Pompa Inlet</div>
+            <div class="pump-spec">Centrifugal · 15 kW · 1450 rpm max</div>
+            <div class="pump-stats">
+              <span class="pump-rpm"><span id="p1rpm">1230</span> <span style="font-size:8px;color:var(--muted)">rpm</span></span>
+              <span style="font-size:9px;color:var(--muted)">Beban:</span>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent2)" id="p1load">84</span><span style="font-size:8px;color:var(--muted)">%</span>
+            </div>
+            <div class="pump-bar"><div class="pump-bar-fill" id="p1bar" style="width:84%"></div></div>
+          </div>
+          <div class="pump-status-badge badge-run">Running</div>
+        </div>
+
+        <div class="pump-card running" id="pcard2">
+          <div class="pump-icon-wrap running" id="picon2">
+            <div class="spin-ring" style="animation-duration:5s"></div>
+            <i class="ti ti-windmill"></i>
+          </div>
+          <div class="pump-info">
+            <div class="pump-name">P-02 · Pompa Dosing</div>
+            <div class="pump-spec">Diaphragm · 1.5 kW · 100 SPM max</div>
+            <div class="pump-stats">
+              <span class="pump-rpm"><span id="p2rpm">72</span> <span style="font-size:8px;color:var(--muted)">spm</span></span>
+              <span style="font-size:9px;color:var(--muted)">Beban:</span>
+              <span style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent2)" id="p2load">72</span><span style="font-size:8px;color:var(--muted)">%</span>
+            </div>
+            <div class="pump-bar"><div class="pump-bar-fill" id="p2bar" style="width:72%"></div></div>
+          </div>
+          <div class="pump-status-badge badge-run">Running</div>
+        </div>
+
+        <div class="pump-card" id="pcard3">
+          <div class="pump-icon-wrap" id="picon3">
+            <i class="ti ti-windmill"></i>
+          </div>
+          <div class="pump-info">
+            <div class="pump-name">P-03 · Pompa Distribusi</div>
+            <div class="pump-spec">Centrifugal · 22 kW · 1450 rpm max</div>
+            <div class="pump-stats">
+              <span class="pump-rpm" style="color:var(--muted)"><span id="p3rpm">0</span> <span style="font-size:8px">rpm</span></span>
+              <span style="font-size:9px;color:var(--muted)">— Standby</span>
+            </div>
+            <div class="pump-bar"><div class="pump-bar-fill" id="p3bar" style="width:0%;background:linear-gradient(90deg,#333,#444)"></div></div>
+          </div>
+          <div class="pump-status-badge badge-stby">Standby</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- VALVES -->
+    <div class="valves-panel">
+      <div class="section-title"><i class="ti ti-valve"></i> Solenoid Valve — 6 Unit</div>
+      <div class="valve-grid">
+
+        <div class="valve-cell">
+          <div class="valve-circle open"><i class="ti ti-valve"></i><div class="flow-anim"></div></div>
+          <div class="valve-id">SV-01</div>
+          <div class="valve-name">Inlet Utama</div>
+          <div class="valve-state open">OPEN</div>
+        </div>
+        <div class="valve-cell">
+          <div class="valve-circle open"><i class="ti ti-valve"></i><div class="flow-anim"></div></div>
+          <div class="valve-id">SV-02</div>
+          <div class="valve-name">Pre-Filter</div>
+          <div class="valve-state open">OPEN</div>
+        </div>
+        <div class="valve-cell">
+          <div class="valve-circle open"><i class="ti ti-valve"></i><div class="flow-anim"></div></div>
+          <div class="valve-id">SV-03</div>
+          <div class="valve-name">Dosing Kimia</div>
+          <div class="valve-state open">OPEN</div>
+        </div>
+        <div class="valve-cell">
+          <div class="valve-circle closed"><i class="ti ti-valve"></i></div>
+          <div class="valve-id">SV-04</div>
+          <div class="valve-name">Backwash</div>
+          <div class="valve-state closed">CLOSED</div>
+        </div>
+        <div class="valve-cell">
+          <div class="valve-circle open"><i class="ti ti-valve"></i><div class="flow-anim"></div></div>
+          <div class="valve-id">SV-05</div>
+          <div class="valve-name">Outlet Filter</div>
+          <div class="valve-state open">OPEN</div>
+        </div>
+        <div class="valve-cell">
+          <div class="valve-circle closed"><i class="ti ti-valve"></i></div>
+          <div class="valve-id">SV-06</div>
+          <div class="valve-name">Drain / Buang</div>
+          <div class="valve-state closed">CLOSED</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /bottom-row -->
+
+  <!-- STATUS TICKER -->
+  <div class="alarm-bar">
+    <div class="alarm-label"><i class="ti ti-activity"></i> STATUS SISTEM</div>
+    <div class="ticker-wrap">
+      <div class="ticker-track" id="tickerTrack"></div>
+    </div>
+  </div>
+
+</div><!-- /body-wrap -->
+
+<script>
+/* ─────────────── CLOCK ─────────────── */
+function updateClock(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  document.getElementById('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  const days=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('datedisp').textContent=days[d.getDay()]+', '+d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+}
+updateClock();setInterval(updateClock,1000);
+
+/* ─────────────── CHART SETUP ─────────────── */
+const MAX_PTS=50;
+const tsLabels=[];
+
+const allDS=[
+  [
+    {label:'LT-101 (m)',data:[],borderColor:'#00d4ff',borderWidth:1.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,212,255,0.06)'},
+    {label:'LT-102 (m)',data:[],borderColor:'#4488ff',borderWidth:1.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(68,136,255,0.06)'}
+  ],
+  [
+    {label:'PT-201 (bar)',data:[],borderColor:'#ffd700',borderWidth:1.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(255,215,0,0.06)'},
+    {label:'PT-202 (bar)',data:[],borderColor:'#ff8c00',borderWidth:1.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(255,140,0,0.06)'}
+  ],
+  [
+    {label:'QT-301 TDS (ppm)',data:[],borderColor:'#00ff9d',borderWidth:1.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,255,157,0.06)'}
+  ],
+  [
+    {label:'FT-401 (m³/h)',data:[],borderColor:'#ff6b35',borderWidth:1.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(255,107,53,0.06)'}
+  ]
+];
+const tabColors=['#00d4ff','#ffd700','#00ff9d','#ff6b35'];
+
+let activeTab=0;
+Chart.defaults.color='#4a6fa5';
+Chart.defaults.font.family="'Share Tech Mono',monospace";
+Chart.defaults.font.size=8;
+
+const ctx=document.getElementById('rtChart').getContext('2d');
+const chart=new Chart(ctx,{
+  type:'line',
+  data:{labels:tsLabels,datasets:allDS[0]},
+  options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:0},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'rgba(6,13,26,.96)',
+        borderColor:'#1a3a5c',borderWidth:1,
+        titleColor:'#c8e0f4',bodyColor:'#7aabdc',
+        padding:10,titleFont:{size:9},bodyFont:{size:8},
+        callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.formattedValue}`}
+      }
+    },
+    scales:{
+      x:{
+        grid:{color:'rgba(26,58,92,.35)',lineWidth:.5},
+        ticks:{color:'#4a6fa5',maxTicksLimit:8,maxRotation:0}
+      },
+      y:{
+        grid:{color:'rgba(26,58,92,.35)',lineWidth:.5},
+        ticks:{color:'#4a6fa5'},
+        position:'right'
+      }
+    }
+  }
+});
+
+function buildLegend(){
+  const row=document.getElementById('legendRow');row.innerHTML='';
+  allDS[activeTab].forEach(ds=>{
+    const s=document.createElement('span');
+    s.className='legend-item';
+    s.innerHTML=`<span class="legend-swatch" style="background:${ds.borderColor}"></span>${ds.label}`;
+    row.appendChild(s);
+  });
+}
+buildLegend();
+
+function switchTab(i){
+  activeTab=i;
+  document.querySelectorAll('.tab-btn').forEach((b,idx)=>{
+    b.classList.toggle('active',idx===i);
+    b.style.color=idx===i?tabColors[i]:'';
+    b.style.borderBottomColor=idx===i?tabColors[i]:'transparent';
+  });
+  chart.data.datasets=allDS[i];
+  chart.update('none');
+  buildLegend();
+}
+
+/* ─────────────── KONFIGURASI SERVER ─────────────── */
+const SERVER_HOST = window.location.hostname || 'localhost';
+const SERVER_PORT = 3000;
+const API_BASE    = `http://${SERVER_HOST}:${SERVER_PORT}`;
+const WS_URL      = `ws://${SERVER_HOST}:${SERVER_PORT}`;
+
+/* ─────────────── PETA SENSOR → ELEMEN DOM ─────────────── */
+// device_id di DB → { el nilai, el bar, el trend, max skala, desimal }
+const SENSOR_MAP = {
+  'LT-101': { val:'lt1val', bar:'lt1bar', trend:'lt1trend', max:4,   dec:2 },
+  'LT-102': { val:'lt2val', bar:'lt2bar', trend:'lt2trend', max:3,   dec:2 },
+  'PT-201': { val:'pt1val', bar:'pt1bar', trend:'pt1trend', max:5,   dec:2 },
+  'PT-202': { val:'pt2val', bar:'pt2bar', trend:'pt2trend', max:5,   dec:2 },
+  'QT-301': { val:'qt1val', bar:'qt1bar', trend:'qt1trend', max:500, dec:0 },
+  'FT-401': { val:'ft1val', bar:'ft1bar', trend:'ft1trend', max:75,  dec:1 },
+};
+
+// Pompa: device_id → { el rpm, el load, el bar, rpm_max }
+const PUMP_MAP = {
+  'P-01': { rpm:'p1rpm', load:'p1load', bar:'p1bar', rpmMax:1450, card:'pcard1', icon:'picon1' },
+  'P-02': { rpm:'p2rpm', load:'p2load', bar:'p2bar', rpmMax:100,  card:'pcard2', icon:'picon2' },
+  'P-03': { rpm:'p3rpm', load:null,     bar:'p3bar', rpmMax:1450, card:'pcard3', icon:'picon3' },
+};
+
+// Valve: device_id → { circle el id, state el id }
+const VALVE_MAP = {
+  'SV-01': { circle:'svcircle1', state:'svstate1' },
+  'SV-02': { circle:'svcircle2', state:'svstate2' },
+  'SV-03': { circle:'svcircle3', state:'svstate3' },
+  'SV-04': { circle:'svcircle4', state:'svstate4' },
+  'SV-05': { circle:'svcircle5', state:'svstate5' },
+  'SV-06': { circle:'svcircle6', state:'svstate6' },
+};
+
+// Tambahkan id pada elemen valve di DOM
+(function patchValveIds(){
+  const cells = document.querySelectorAll('.valve-cell');
+  const ids = ['SV-01','SV-02','SV-03','SV-04','SV-05','SV-06'];
+  cells.forEach((cell, i) => {
+    const id = ids[i];
+    const circle = cell.querySelector('.valve-circle');
+    const state  = cell.querySelector('.valve-state');
+    if(circle) circle.id = 'svcircle'+(i+1);
+    if(state)  state.id  = 'svstate'+(i+1);
+  });
+})();
+
+/* ─────────────── STATE SEBELUMNYA (untuk trend) ─────────────── */
+const prevVals = {};
+
+function trendHTML(cur, prev) {
+  const diff = cur - prev;
+  if (Math.abs(diff) < 0.001) return `<span class="trend-st"><i class="ti ti-minus"></i></span>`;
+  return diff > 0
+    ? `<span class="trend-up"><i class="ti ti-trending-up"></i></span>`
+    : `<span class="trend-dn"><i class="ti ti-trending-down"></i></span>`;
+}
+
+/* ─────────────── UPDATE SENSOR KE DOM ─────────────── */
+function applySensorReading(device_id, value) {
+  const cfg = SENSOR_MAP[device_id];
+  if (!cfg) return;
+
+  const valEl   = document.getElementById(cfg.val);
+  const barEl   = document.getElementById(cfg.bar);
+  const trendEl = document.getElementById(cfg.trend);
+
+  const numVal = parseFloat(value);
+  if (isNaN(numVal)) return;
+
+  const display = cfg.dec === 0 ? Math.round(numVal) : numVal.toFixed(cfg.dec);
+  if (valEl) valEl.textContent = display;
+  if (barEl) barEl.style.width = Math.min(100, (numVal / cfg.max * 100)).toFixed(1) + '%';
+  if (trendEl && prevVals[device_id] !== undefined) {
+    trendEl.innerHTML = trendHTML(numVal, prevVals[device_id]);
+  }
+  prevVals[device_id] = numVal;
+}
+
+/* ─────────────── UPDATE POMPA KE DOM ─────────────── */
+function applyPumpStatus(device_id, value) {
+  const cfg = PUMP_MAP[device_id];
+  if (!cfg) return;
+
+  const numVal   = parseFloat(value);
+  const isRunning = numVal > 0;
+  const pct      = Math.min(100, (numVal / cfg.rpmMax * 100)).toFixed(0);
+
+  const cardEl = document.getElementById(cfg.card);
+  const iconEl = document.getElementById(cfg.icon);
+  const badge  = cardEl ? cardEl.querySelector('.pump-status-badge') : null;
+
+  if (document.getElementById(cfg.rpm)) document.getElementById(cfg.rpm).textContent = Math.round(numVal);
+  if (cfg.load && document.getElementById(cfg.load)) document.getElementById(cfg.load).textContent = pct;
+  if (document.getElementById(cfg.bar)) document.getElementById(cfg.bar).style.width = pct + '%';
+
+  if (cardEl) {
+    cardEl.classList.toggle('running', isRunning);
+    if (isRunning) cardEl.style.removeProperty('background');
+  }
+  if (iconEl) {
+    iconEl.classList.toggle('running', isRunning);
+  }
+  if (badge) {
+    badge.className = 'pump-status-badge ' + (isRunning ? 'badge-run' : (device_id==='P-03'?'badge-stby':'badge-stop'));
+    badge.textContent = isRunning ? 'Running' : (device_id==='P-03' ? 'Standby' : 'Stop');
+  }
+}
+
+/* ─────────────── UPDATE VALVE KE DOM ─────────────── */
+function applyValveStatus(device_id, value) {
+  const cfg = VALVE_MAP[device_id];
+  if (!cfg) return;
+
+  const isOpen   = parseInt(value) === 1;
+  const circleEl = document.getElementById(cfg.circle);
+  const stateEl  = document.getElementById(cfg.state);
+
+  if (circleEl) {
+    circleEl.className = 'valve-circle ' + (isOpen ? 'open' : 'closed');
+    // flow-anim hanya pada open
+    const existingAnim = circleEl.querySelector('.flow-anim');
+    if (isOpen && !existingAnim) {
+      const anim = document.createElement('div');
+      anim.className = 'flow-anim';
+      circleEl.appendChild(anim);
+    } else if (!isOpen && existingAnim) {
+      existingAnim.remove();
+    }
+  }
+  if (stateEl) {
+    stateEl.className = 'valve-state ' + (isOpen ? 'open' : 'closed');
+    stateEl.textContent = isOpen ? 'OPEN' : 'CLOSED';
+  }
+}
+
+/* ─────────────── PUSH DATA KE CHART ─────────────── */
+function pushToChart(readings) {
+  // readings: array { device_id, value, timestamp }
+  // Ambil timestamp dari reading pertama yang valid
+  const sample = readings.find(r => r.timestamp);
+  if (!sample) return;
+
+  const ts = new Date(sample.timestamp).toTimeString().slice(0, 8);
+
+  if (tsLabels.length >= MAX_PTS) {
+    tsLabels.shift();
+    allDS.forEach(ds => ds.forEach(d => { if (d.data.length) d.data.shift(); }));
+  }
+  tsLabels.push(ts);
+
+  const byId = {};
+  readings.forEach(r => { byId[r.device_id] = parseFloat(r.value); });
+
+  allDS[0][0].data.push(byId['LT-101'] ?? null);
+  allDS[0][1].data.push(byId['LT-102'] ?? null);
+  allDS[1][0].data.push(byId['PT-201'] ?? null);
+  allDS[1][1].data.push(byId['PT-202'] ?? null);
+  allDS[2][0].data.push(byId['QT-301'] ?? null);
+  allDS[3][0].data.push(byId['FT-401'] ?? null);
+  chart.update('none');
+}
+
+/* ─────────────── PROSES PESAN DARI SERVER ─────────────── */
+// server.js format: { type:'update'|'snapshot', sensors:[{id,name,type,value,recorded_at}], devices:[{id,type,status,extra_json}] }
+function processPayload(payload) {
+  const readings = [];
+
+  if (Array.isArray(payload.sensors)) {
+    payload.sensors.forEach(s => {
+      if (s.value !== null && s.value !== undefined) {
+        readings.push({ device_id: s.id, value: s.value, timestamp: s.recorded_at });
+      }
+    });
+  }
+
+  if (Array.isArray(payload.devices)) {
+    payload.devices.forEach(d => {
+      const extra = d.extra || (d.extra_json ? JSON.parse(d.extra_json) : null);
+      if (d.type === 'pump') {
+        const rpm = extra ? (extra.rpm || 0) : (d.status === 'running' ? 800 : 0);
+        readings.push({ device_id: d.id, value: rpm, timestamp: d.updated_at });
+      } else if (d.type === 'valve') {
+        readings.push({ device_id: d.id, value: d.status === 'open' ? 1 : 0, timestamp: d.updated_at });
+      }
+    });
+  }
+
+  if (readings.length === 0) return;
+
+  readings.forEach(r => {
+    if (SENSOR_MAP[r.device_id])     applySensorReading(r.device_id, r.value);
+    else if (PUMP_MAP[r.device_id])  applyPumpStatus(r.device_id, r.value);
+    else if (VALVE_MAP[r.device_id]) applyValveStatus(r.device_id, r.value);
+  });
+
+  const sensorReadings = readings.filter(r => SENSOR_MAP[r.device_id]);
+  if (sensorReadings.length > 0) pushToChart(sensorReadings);
+
+  document.getElementById('statusText').textContent = 'SEMUA SISTEM AKTIF';
+  document.getElementById('updateInterval').textContent = 'Live — WebSocket';
+  buildTicker(readings);
+}
+
+// Wrapper untuk format lama (array langsung) — tetap kompatibel
+function processReadings(readings) {
+  if (!Array.isArray(readings) || readings.length === 0) return;
+  processPayload({ sensors: readings.map(r => ({id: r.device_id, value: r.value, recorded_at: r.timestamp})), devices: [] });
+}
+
+/* ─────────────── KONEKSI WEBSOCKET ─────────────── */
+let ws = null;
+let wsRetryDelay = 2000;
+
+function connectWS() {
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    console.log('[WS] Terhubung ke server');
+    wsRetryDelay = 2000;
+    document.getElementById('connDot').style.background = 'var(--accent2)';
+    document.getElementById('connDot').style.boxShadow  = '0 0 8px var(--accent2)';
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      // server.js mengirim { type, sensors, devices }
+      if (data.sensors || data.devices) {
+        processPayload(data);
+      } else if (Array.isArray(data)) {
+        processReadings(data);
+      }
+    } catch(e) {
+      console.warn('[WS] Gagal parse pesan:', e);
+    }
+  };
+
+  ws.onclose = () => {
+    console.warn('[WS] Koneksi terputus, mencoba ulang dalam', wsRetryDelay, 'ms');
+    document.getElementById('connDot').style.background = '#ff4444';
+    document.getElementById('connDot').style.boxShadow  = '0 0 8px #ff4444';
+    document.getElementById('statusText').textContent = 'KONEKSI TERPUTUS — MENCOBA ULANG...';
+    setTimeout(connectWS, wsRetryDelay);
+    wsRetryDelay = Math.min(wsRetryDelay * 1.5, 15000);
+  };
+
+  ws.onerror = (err) => {
+    console.error('[WS] Error:', err);
+    ws.close();
+  };
+}
+
+/* ─────────────── AMBIL DATA HISTORIS AWAL (REST API) ─────────────── */
+async function loadInitialHistory() {
+  try {
+    // Ambil 50 data terakhir untuk mengisi chart awal
+    const sensorIds = Object.keys(SENSOR_MAP);
+    for (const id of sensorIds) {
+      const res = await fetch(`${API_BASE}/api/history/${id}?limit=50`);
+      if (!res.ok) continue;
+      const rows = await res.json(); // [{device_id, value, timestamp}, ...]
+      rows.forEach(r => {
+        const ts = new Date(r.timestamp).toTimeString().slice(0, 8);
+        if (!tsLabels.includes(ts)) tsLabels.push(ts);
+        applySensorReading(r.device_id, r.value);
+      });
+    }
+    // Isi chart dari history sensor pertama (LT-101) sebagai acuan label
+    const res = await fetch(`${API_BASE}/api/history/LT-101?limit=50`);
+    if (res.ok) {
+      const rows = await res.json();
+      tsLabels.length = 0;
+      allDS.forEach(ds => ds.forEach(d => d.data.length = 0));
+      // Ambil semua sensor sekaligus via /api/latest untuk titik chart awal
+    }
+    chart.update('none');
+  } catch(e) {
+    console.warn('[API] Gagal load history:', e);
+  }
+}
+
+/* ─────────────── AMBIL DATA TERKINI (REST API — fallback) ─────────────── */
+async function fetchLatest() {
+  try {
+    const res = await fetch(`${API_BASE}/api/latest`);
+    if (!res.ok) return;
+    const data = await res.json();
+    // /api/latest mengembalikan { ok, sensors, devices }
+    if (data.sensors || data.devices) {
+      processPayload(data);
+    } else if (Array.isArray(data)) {
+      processReadings(data);
+    }
+  } catch(e) {
+    // Server belum siap, abaikan
+  }
+}
+
+/* ─────────────── INISIALISASI ─────────────── */
+// Coba ambil data awal via REST, lalu sambungkan WebSocket
+fetchLatest();
+loadInitialHistory();
+connectWS();
+
+// Fallback polling REST setiap 3 detik jika WS tidak terhubung
+setInterval(() => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    fetchLatest();
+  }
+}, 3000);
+
+/* ─────────────── TICKER DINAMIS ─────────────── */
+function buildTicker(readings) {
+  const track = document.getElementById('tickerTrack');
+  track.innerHTML = '';
+
+  const items = [];
+  if (!readings || readings.length === 0) {
+    items.push({text:'Menunggu data dari server...', cls:'t-info'});
+  } else {
+    const byId = {};
+    readings.forEach(r => { byId[r.device_id] = parseFloat(r.value); });
+
+    if (byId['LT-101'] !== undefined) items.push({text:`LT-101 · Level Bak Sedimentasi ${byId['LT-101'].toFixed(2)} m`, cls:'t-ok'});
+    if (byId['LT-102'] !== undefined) items.push({text:`LT-102 · Level Bak Filter ${byId['LT-102'].toFixed(2)} m`, cls:'t-ok'});
+    if (byId['PT-201'] !== undefined) items.push({text:`PT-201 · Tekanan Inlet ${byId['PT-201'].toFixed(2)} bar`, cls:'t-ok'});
+    if (byId['PT-202'] !== undefined) items.push({text:`PT-202 · Tekanan Outlet ${byId['PT-202'].toFixed(2)} bar`, cls:'t-ok'});
+    if (byId['QT-301'] !== undefined) items.push({text:`QT-301 · TDS Effluent ${Math.round(byId['QT-301'])} ppm`, cls: byId['QT-301']<300?'t-ok':'t-warn'});
+    if (byId['FT-401'] !== undefined) items.push({text:`FT-401 · Flow Rate ${byId['FT-401'].toFixed(1)} m³/h`, cls:'t-ok'});
+
+    ['P-01','P-02','P-03'].forEach(id => {
+      if (byId[id] !== undefined) {
+        const on = byId[id] > 0;
+        items.push({text:`${id} · ${on?'Running':'Standby'} ${on?byId[id].toFixed(0)+' rpm':''}`.trim(), cls: on?'t-ok':'t-info'});
+      }
+    });
+    ['SV-01','SV-02','SV-03','SV-04','SV-05','SV-06'].forEach(id => {
+      if (byId[id] !== undefined) {
+        const open = parseInt(byId[id]) === 1;
+        items.push({text:`${id} · ${open?'OPEN':'CLOSED'}`, cls: open?'t-ok':'t-info'});
+      }
+    });
+    items.push({text:'Sistem Beroperasi — Data Live dari Database', cls:'t-ok'});
+  }
+
+  [...items, ...items].forEach(item => {
+    const el = document.createElement('span');
+    el.className = 'ticker-item ' + item.cls;
+    el.innerHTML = `<div class="ticker-dot"></div>${item.text}`;
+    track.appendChild(el);
+  });
+}
+
+buildTicker([]); // inisialisasi awal kosong
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "wtp-dashboard",
+  "version": "1.0.0",
+  "description": "AquaControl Pro — Water Treatment Plant Monitoring Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "water-treatment",
+    "dashboard",
+    "monitoring",
+    "scada"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "express": "^5.2.1",
+    "ws": "^8.20.1"
+  }
+}
